@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f6f4f0">
+<title>旅のしおり</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@700&display=swap">
+<style>
+/* Layout: one column. Lock screen → "next up" hero with countdown → day-by-day timeline → stay cards. */
+:root{
+  --bg:#f6f4f0; --surface:#ffffff; --fg:#22252e; --muted:#6b6f7c; --line:#e3e0d9;
+  --accent:#c2571a; --accent-soft:#f6e3d6; --done:#2f7d5b; --done-soft:#e1f1e8; --ink:#1d3b6e;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --font-head:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#17181d; --surface:#21232a; --fg:#ecebe7; --muted:#a3a5ae; --line:#33353e;
+  --accent:#ef8a4c; --accent-soft:#3a2a20; --done:#62c193; --done-soft:#1f3329; --ink:#9db8ea; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.55;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 56px;display:flex;flex-direction:column;gap:20px}
+h1{font-family:var(--font-head);font-size:1.7rem;margin:0;text-wrap:balance}
+h2{font-family:var(--font-head);font-size:1.1rem;margin:0}
+.sub{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+button,.btn{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:99px;padding:6px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;line-height:1.4}
+button:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+[hidden]{display:none!important}
+
+/* lock */
+.lock{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:18px}
+.lock form{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.lock label{font-weight:700}
+.lock input[type=password]{font:inherit;font-size:1rem;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg);width:100%}
+.lock .row{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted)}
+.lock .err{color:var(--accent);font-size:.9rem;margin:0}
+.lock .primary{padding:12px;font-size:1rem;justify-content:center}
+
+/* header */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+
+/* next up */
+.next{background:var(--ink);color:#fff;border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px}
+@media (prefers-color-scheme: dark){.next{color:#11131a}}
+.next .eyebrow{font-size:.75rem;letter-spacing:.08em;opacity:.8}
+.next .what{font-family:var(--font-head);font-size:1.25rem;text-wrap:balance}
+.next .when{font-size:.95rem;opacity:.9}
+.next .count{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.next .count small{font-size:.9rem;font-weight:500;opacity:.85;margin-left:4px}
+
+/* timeline */
+.day{display:flex;flex-direction:column;gap:8px}
+.day h3{font-family:var(--font-head);font-size:1rem;margin:0;color:var(--accent)}
+.ev{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;grid-template-columns:4.4em 1fr;gap:4px 12px}
+.ev.past{opacity:.5}
+.ev.now{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.ev .t{font-weight:700;font-variant-numeric:tabular-nums}
+.ev .t small{display:block;font-weight:500;font-size:.72rem;color:var(--muted)}
+.ev .body{min-width:0;display:flex;flex-direction:column;gap:4px}
+.ev .title{font-weight:700}
+.ev .route{font-size:.88rem;color:var(--muted);overflow-wrap:anywhere}
+.ev .detail{font-size:.88rem;overflow-wrap:anywhere}
+.ev .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;border-radius:99px;padding:1px 8px;margin-right:6px;background:var(--accent-soft);color:var(--accent);vertical-align:2px}
+
+/* stays */
+.stays{display:flex;flex-direction:column;gap:12px}
+.stay{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.stay .nights{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.stay .name{font-family:var(--font-head);font-size:1.15rem}
+.stay .city{font-size:.8rem;color:var(--muted)}
+.stay .addr{font-size:.9rem;overflow-wrap:anywhere}
+.stay .note{font-size:.85rem;color:var(--muted)}
+.stay .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+
+/* driver view */
+.driver{position:fixed;inset:0;z-index:20;background:#fff;color:#111;display:flex;flex-direction:column;justify-content:center;gap:24px;
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));overflow:auto}
+.driver .dname{font-size:clamp(2rem,9vw,3.4rem);font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.driver .daddr{font-size:clamp(1.2rem,5.5vw,2rem);line-height:1.35;overflow-wrap:anywhere}
+.driver .dphone{font-size:clamp(1.2rem,5.5vw,1.8rem);font-weight:700;font-variant-numeric:tabular-nums}
+.driver .please{font-size:1rem;color:#555}
+.driver button{align-self:flex-start;font-size:1rem;background:#111;color:#fff;border-color:#111}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);border-radius:99px;padding:8px 16px;font-size:.9rem;z-index:30}
+.foot{font-size:.78rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="lock" id="lock">
+    <div>
+      <h1>旅のしおり</h1>
+      <p class="sub">パスワードを入れると開きます</p>
+    </div>
+    <form id="lockForm" autocomplete="off">
+      <label for="pw">パスワード</label>
+      <input type="password" id="pw" name="pw" autocomplete="current-password" required>
+      <div class="row"><input type="checkbox" id="remember" checked><label for="remember" style="font-weight:400">この端末では10日間パスワードなしで開く</label></div>
+      <p class="err" id="err" hidden>パスワードが違います。もう一度入れてください。</p>
+      <button type="submit" class="primary" id="openBtn">開く</button>
+    </form>
+  </section>
+
+  <main id="app" hidden>
+    <div class="top">
+      <div>
+        <h1 id="title"></h1>
+        <p class="sub" id="period"></p>
+      </div>
+      <button type="button" id="lockBtn">ロック</button>
+    </div>
+
+    <section class="next" id="next" aria-live="polite"></section>
+
+    <section class="day" style="gap:12px">
+      <h2>予定</h2>
+      <p class="sub" style="margin:0">時刻はその場所の現地時間です（インドは日本より3時間半遅い）</p>
+      <div id="timeline" style="display:flex;flex-direction:column;gap:16px"></div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:12px">
+      <h2>宿</h2>
+      <div class="stays" id="stays"></div>
+    </section>
+
+    <p class="foot">住所を押すとGoogleマップが開きます。「ドライバーに見せる」で、宿の名前と住所を大きく表示できます。</p>
+  </main>
+</div>
+
+<div class="driver" id="driver" hidden role="dialog" aria-modal="true" aria-labelledby="dname">
+  <div class="please">Please take me to:</div>
+  <div class="dname" id="dname"></div>
+  <div class="daddr" id="daddr"></div>
+  <div class="dphone" id="dphone"></div>
+  <button type="button" id="closeDriver">閉じる</button>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const PAYLOAD = {"iter":600000,"salt":"klE5gjhQNxecxjZFZ2Skqw==","iv":"Oi9GKRwW6uSte82L","ct":"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"};
+const KEY = "trip-shiori-pw";
+const REMEMBER_MS = 10 * 24 * 60 * 60 * 1000; // 10日間
+
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decrypt(pw){
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt:b64(PAYLOAD.salt), iterations:PAYLOAD.iter, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(PAYLOAD.iv)}, key, b64(PAYLOAD.ct));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mapUrl = q => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+const TZ = {jst:"Asia/Tokyo", ist:"Asia/Kolkata"};
+const TZLABEL = {jst:"日本時間", ist:"インド時間"};
+
+function fmt(iso, tz, opts){
+  return new Intl.DateTimeFormat("ja-JP", Object.assign({timeZone:TZ[tz]}, opts)).format(new Date(iso));
+}
+const hm = (iso,tz) => fmt(iso, tz, {hour:"2-digit", minute:"2-digit", hour12:false});
+const dayKey = (iso,tz) => fmt(iso, tz, {month:"numeric", day:"numeric", weekday:"short"});
+const tzOf = e => e.tz || (e.start.endsWith("+09:00") ? "jst" : "ist");
+
+let DATA = null, timer = null;
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 1600);
+}
+async function copy(text){
+  try{ await navigator.clipboard.writeText(text); toast("コピーしました"); }
+  catch(e){
+    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand("copy"); toast("コピーしました"); }catch(_){ toast("長押しでコピーしてください"); }
+    ta.remove();
+  }
+}
+function showDriver(s){
+  $("dname").textContent = s.name;
+  $("daddr").textContent = s.address;
+  $("dphone").textContent = s.phone || "";
+  $("driver").hidden = false;
+  $("closeDriver").focus();
+}
+
+function stayActs(s){
+  let h = `<a class="btn" href="${mapUrl(s.name + ", " + s.address)}" target="_blank" rel="noopener">地図</a>`;
+  if (s.phone){
+    const tel = s.phone.replace(/[^+\d]/g, "");
+    h += `<a class="btn" href="tel:${tel}">電話</a><button type="button" data-copy="${esc(s.phone)}">番号をコピー</button>`;
+  }
+  h += `<button type="button" data-copy="${esc(s.address)}">住所をコピー</button>`;
+  if (s.booking) h += `<button type="button" data-copy="${esc(s.booking)}">予約ID ${esc(s.booking)}</button>`;
+  h += `<button type="button" data-driver="${esc(s.id)}">ドライバーに見せる</button>`;
+  return h;
+}
+
+function render(){
+  $("title").textContent = DATA.title;
+  $("period").textContent = DATA.period;
+  document.title = DATA.title;
+  const stays = Object.fromEntries(DATA.stays.map(s => [s.id, s]));
+
+  // stays
+  $("stays").innerHTML = DATA.stays.map(s => `
+    <article class="stay">
+      <div class="nights">${esc(s.nights)}</div>
+      <div class="name">${esc(s.name)}</div>
+      <div class="city">${esc(s.city)}</div>
+      <a class="addr" href="${mapUrl(s.name + ", " + s.address)}" target="_blank" rel="noopener">${esc(s.address)}</a>
+      ${s.phone ? `<div class="addr">${esc(s.phone)}</div>` : ""}
+      <div class="note">${esc(s.note)}</div>
+      <div class="acts">${stayActs(s)}</div>
+    </article>`).join("");
+
+  // timeline grouped by local day
+  const groups = [];
+  DATA.events.forEach((e, i) => {
+    const tz = tzOf(e), k = dayKey(e.start, tz);
+    let g = groups[groups.length - 1];
+    if (!g || g.k !== k){ g = {k, items:[]}; groups.push(g); }
+    g.items.push({e, i, tz});
+  });
+  $("timeline").innerHTML = groups.map(g => `
+    <div class="day">
+      <h3>${esc(g.k)}</h3>
+      ${g.items.map(({e, i, tz}) => {
+        const endTz = e.endTz || tz;
+        const kind = {flight:"飛行機", bus:"バス", train:"列車", stay:"宿", note:"メモ"}[e.kind] || "";
+        const s = e.stay ? stays[e.stay] : null;
+        let acts = "";
+        if (e.mapFrom) acts += `<a class="btn" href="${mapUrl(e.mapFrom)}" target="_blank" rel="noopener">乗り場の地図</a>`;
+        if (e.mapTo) acts += `<a class="btn" href="${mapUrl(e.mapTo)}" target="_blank" rel="noopener">降り場の地図</a>`;
+        (e.copy || []).forEach(c => acts += `<button type="button" data-copy="${esc(c)}">${esc(c)} をコピー</button>`);
+        if (s) acts += `<a class="btn" href="${mapUrl(s.name + ", " + s.address)}" target="_blank" rel="noopener">地図</a><button type="button" data-driver="${esc(s.id)}">ドライバーに見せる</button>`;
+        return `
+        <div class="ev" data-i="${i}">
+          <div class="t">${hm(e.start, tz)}${e.approx ? "<small>ごろ</small>" : ""}${e.end ? `<small>→ ${hm(e.end, endTz)}${endTz !== tz ? "（" + TZLABEL[endTz] + "）" : ""}</small>` : ""}<small>${TZLABEL[tz]}</small></div>
+          <div class="body">
+            <div class="title"><span class="tag">${kind}</span>${esc(e.title)}</div>
+            ${e.from ? `<div class="route">${esc(e.from)} → ${esc(e.to)}</div>` : ""}
+            ${e.detail ? `<div class="detail">${esc(e.detail)}</div>` : ""}
+            ${acts ? `<div class="acts">${acts}</div>` : ""}
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`).join("");
+
+  tick();
+  clearInterval(timer); timer = setInterval(tick, 30000);
+}
+
+function tick(){
+  const now = Date.now();
+  let next = null, current = null;
+  DATA.events.forEach((e, i) => {
+    const st = Date.parse(e.start), en = e.end ? Date.parse(e.end) : st;
+    const el = document.querySelector(`.ev[data-i="${i}"]`);
+    if (!el) return;
+    el.classList.toggle("past", en < now);
+    const isNow = e.end && st <= now && now <= en;
+    el.classList.toggle("now", !!isNow);
+    if (isNow) current = {e, i};
+    if (!next && st > now) next = {e, i};
+  });
+
+  const box = $("next");
+  const pick = current || next;
+  if (!pick){
+    box.innerHTML = `<div class="eyebrow">旅の予定</div><div class="what">おかえりなさい！全部の予定が終わりました</div>`;
+    return;
+  }
+  const e = pick.e, tz = tzOf(e);
+  if (current){
+    const left = Date.parse(e.end) - now;
+    box.innerHTML = `<div class="eyebrow">いま移動中</div><div class="what">${esc(e.title)}</div>
+      <div class="when">到着 ${hm(e.end, e.endTz || tz)}（${TZLABEL[e.endTz || tz]}）</div>
+      <div class="count">${dur(left)}<small>で到着</small></div>`;
+  } else {
+    const left = Date.parse(e.start) - now;
+    box.innerHTML = `<div class="eyebrow">次の予定</div><div class="what">${esc(e.title)}</div>
+      <div class="when">${dayKey(e.start, tz)} ${hm(e.start, tz)}${e.approx ? "ごろ" : ""}（${TZLABEL[tz]}）</div>
+      <div class="count">あと ${dur(left)}</div>`;
+  }
+}
+function dur(ms){
+  const m = Math.max(0, Math.round(ms / 60000));
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  if (d > 0) return `${d}日 ${h}時間`;
+  if (h > 0) return `${h}時間 ${mm}分`;
+  return `${mm}分`;
+}
+
+document.addEventListener("click", ev => {
+  const c = ev.target.closest("[data-copy]");
+  if (c){ copy(c.getAttribute("data-copy")); return; }
+  const d = ev.target.closest("[data-driver]");
+  if (d){ const s = DATA.stays.find(x => x.id === d.getAttribute("data-driver")); if (s) showDriver(s); }
+});
+$("closeDriver").addEventListener("click", () => { $("driver").hidden = true; });
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") $("driver").hidden = true; });
+
+async function unlock(pw, remember){
+  try{
+    DATA = await decrypt(pw);
+  }catch(e){
+    return false;
+  }
+  if (remember){ try{ localStorage.setItem(KEY, JSON.stringify({pw, exp: Date.now() + REMEMBER_MS})); }catch(_){} }
+  $("lock").hidden = true; $("app").hidden = false;
+  render();
+  return true;
+}
+
+$("lockForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  $("err").hidden = true; $("openBtn").disabled = true; $("openBtn").textContent = "開いています…";
+  const ok = await unlock($("pw").value, $("remember").checked);
+  $("openBtn").disabled = false; $("openBtn").textContent = "開く";
+  if (!ok){ $("err").hidden = false; $("pw").select(); }
+});
+$("lockBtn").addEventListener("click", () => {
+  try{ localStorage.removeItem(KEY); }catch(_){}
+  DATA = null; clearInterval(timer);
+  $("app").hidden = true; $("lock").hidden = false;
+  $("timeline").innerHTML = ""; $("stays").innerHTML = ""; $("next").innerHTML = "";
+  $("pw").value = ""; $("pw").focus();
+});
+
+(async () => {
+  let saved = null;
+  try{
+    const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (raw && raw.pw && raw.exp > Date.now()) saved = raw.pw;
+    else localStorage.removeItem(KEY);
+  }catch(_){}
+  if (saved && await unlock(saved, false)) return;
+  $("pw").focus();
+})();
+</script>
+</body>
+</html>
